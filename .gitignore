@@ -1,0 +1,16 @@
+# Archivos locales y credenciales
+node_modules/
+.firebase/
+.openai/
+.env
+.env.*
+!.env.example
+*service-account*.json
+*serviceAccount*.json
+*credentials*.json
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+*.zip
+.DS_Store
+Thumbs.db

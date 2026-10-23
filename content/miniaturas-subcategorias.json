@@ -1,0 +1,27 @@
+{
+  "mode": "built-in image_gen",
+  "assets": [
+    {
+      "id": "taza-6oz",
+      "prompt": "Use case: product-mockup. Asset type: square product category thumbnail for DANEL website. Scene: seamless very pale ice blue studio background and matching ground plane. Photorealistic premium ecommerce 3D-render appearance, soft natural studio shadows, realistic materials, centered full product with generous 15% margin, three-quarter view, no text, no logos, no watermarks, no people, no extra props. Subject: one small plain white glossy ceramic coffee mug of 6 fluid ounces, short compact cylindrical body, curved handle on the right, empty, smooth white glaze. Show one mug only.",
+      "path": "public/assets/opciones/taza-6oz.webp"
+    },
+    {
+      "id": "franela-oversize",
+      "prompt": "Use case: product-mockup. Asset type: square product category thumbnail for DANEL website. Scene: seamless very pale ice blue studio background and matching ground plane. Photorealistic premium ecommerce 3D-render appearance, soft natural studio shadows, realistic materials, centered full product with generous 15% margin, three-quarter view, no text, no logos, no watermarks, no people, no extra props. Subject: one blank white oversized crew-neck t-shirt, clearly boxy wide torso, dropped shoulder seams, loose wide elbow-length sleeves, realistic soft cotton fabric with subtle folds, floating invisible mannequin presentation, frontal slightly angled view. Full garment with no cropping.",
+      "path": "public/assets/opciones/franela-oversize.webp"
+    },
+    {
+      "id": "sueter",
+      "prompt": "Use case: product-mockup. Asset type: square product category thumbnail for DANEL website. Scene: seamless very pale ice blue studio background and matching ground plane. Photorealistic premium ecommerce 3D-render appearance, soft natural studio shadows, realistic materials, centered full product with generous 15% margin, three-quarter view, no text, no logos, no watermarks, no people, no extra props. Subject: one blank powder blue crew-neck sweatshirt with long sleeves, ribbed collar cuffs and hem, no hood, no zipper, soft textured knit with subtle folds, floating invisible mannequin presentation, frontal slightly angled view. Full garment with no cropping.",
+      "path": "public/assets/opciones/sueter.webp"
+    }
+  ],
+  "reused_assets": [
+    "public/assets/opciones/taza-11oz.webp",
+    "public/assets/opciones/taza-magica.webp",
+    "public/assets/opciones/taza-negra.webp",
+    "public/assets/opciones/franela-normal.webp"
+  ],
+  "note": "Miniaturas ilustrativas. La galería original conserva sus imágenes aplicadas como referencia."
+}
