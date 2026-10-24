@@ -60,3 +60,45 @@ test('los parámetros desconocidos no se convierten en opciones de producto', ()
   assert.equal(state.technique, ''); assert.equal(state.size, '');
   assert.equal(new URLSearchParams(options.query(state)).has('taza'), false);
 });
+
+function collectionOptions() {
+  const context = { window: {}, URLSearchParams };
+  vm.createContext(context);
+  vm.runInContext(fs.readFileSync(path.join(publicRoot, 'opciones.js'), 'utf8'), context);
+  return context.window.DANEL_OPTIONS;
+}
+
+test('entrar en colecciones no elige un producto ni un modelo automáticamente', () => {
+  const options = collectionOptions();
+  const state = options.readCollection(new URLSearchParams());
+  assert.equal(state.module, '');
+  assert.equal(options.hasModel(state), false);
+  options.chooseModule(state, 'tazas');
+  assert.equal(state.module, 'tazas');
+  assert.equal(options.hasModel(state), false);
+  assert.equal(new URLSearchParams(options.query(state)).has('taza'), false);
+});
+
+test('cambiar de familia vuelve a pedir el modelo y elimina las opciones anteriores', () => {
+  const options = collectionOptions();
+  const state = options.readCollection(new URLSearchParams('modulo=franelas&modelo=oversize&tecnica=vinil&talla=L'));
+  assert.equal(options.hasModel(state), true);
+  options.chooseModule(state, 'tazas');
+  assert.equal(options.hasModel(state), false);
+  assert.equal(state.technique, ''); assert.equal(state.size, '');
+  state.mug = '6oz';
+  assert.equal(options.hasModel(state), true);
+  const query = new URLSearchParams(options.query(state));
+  assert.equal(query.get('taza'), '6oz'); assert.equal(query.has('modelo'), false);
+  assert.equal(query.has('tecnica'), false); assert.equal(query.has('talla'), false);
+});
+
+test('volver desde un diseño restaura el modelo válido sin aceptar modelos desconocidos', () => {
+  const options = collectionOptions();
+  const state = options.readCollection(new URLSearchParams('modulo=franelas&modelo=normal&tecnica=dtf-textil&talla=M'));
+  assert.equal(options.hasModel(state), true);
+  assert.equal(options.label(state), 'Corte clásico · DTF textil · Talla M');
+  const invalid = options.readCollection(new URLSearchParams('modulo=franelas&modelo=inexistente&tecnica=vinil&talla=L'));
+  assert.equal(options.hasModel(invalid), false);
+  assert.equal(invalid.technique, ''); assert.equal(invalid.size, '');
+});

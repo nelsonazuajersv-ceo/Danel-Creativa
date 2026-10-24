@@ -3,7 +3,7 @@ const catalog = window.DANEL_CATALOG;
 const params = new URLSearchParams(location.search);
 const productOptions = window.DANEL_OPTIONS;
 const selectedDesign = catalog.products.find(item => item.id === params.get('id') || item.id === params.get('referencia'));
-const optionState = productOptions.read(params, selectedDesign?.module);
+const optionState = document.body.dataset.page === 'colecciones' ? productOptions.readCollection(params) : productOptions.read(params, selectedDesign?.module);
 const moduleNames = { tazas: 'Tazas', franelas: 'Franelas' };
 const formTypes = { tazas: 'Una taza', franelas: 'Una franela' };
 const catalogState = {
@@ -93,6 +93,10 @@ function createCard(project) {
   card.append(preview, details, meta); return card;
 }
 function renderCatalog() {
+  const selected = productOptions.hasModel(optionState);
+  document.querySelector('#catalog-panel').hidden = !selected;
+  document.querySelector('#selection-status').textContent = selected ? 'Has elegido ' + productOptions.label(optionState) + '. Ya puedes explorar los diseños.' : '';
+  if (!selected) { document.querySelector('#catalog-grid').replaceChildren(); return; }
   const category = catalog.categories.find(item => item.id === catalogState.category);
   const items = catalog.products.filter(item => item.module === catalogState.module && (item.category === category.id || item.categories?.includes(category.id))).slice(0, 5);
   document.querySelector('#catalog-grid').replaceChildren(...items.map(createCard));
@@ -116,16 +120,16 @@ if (document.querySelector('#catalog-grid')) {
   });
   const moduleTabs = [...document.querySelectorAll('.module-tab')];
   function selectModule(module, focus = false) {
-    catalogState.module = module; optionState.module = module;
+    productOptions.chooseModule(optionState, module);
+    catalogState.module = optionState.module;
+    document.querySelector('#product-panel').hidden = !Object.hasOwn(moduleNames, module);
     moduleTabs.forEach(tab => {
-      const selected = tab.dataset.module === module; tab.classList.toggle('active', selected); tab.setAttribute('aria-selected', String(selected)); tab.tabIndex = selected ? 0 : -1;
-      if (selected) { document.querySelector('#catalog-panel').setAttribute('aria-labelledby', tab.id); if (focus) tab.focus(); }
+      const selected = tab.dataset.module === module; tab.classList.toggle('active', selected); tab.setAttribute('aria-selected', String(selected)); tab.tabIndex = selected || (!module && tab === moduleTabs[0]) ? 0 : -1;
+      if (selected) { document.querySelector('#product-panel').setAttribute('aria-labelledby', tab.id); if (focus) tab.focus(); }
     }); optionPicker.update(); renderCatalog();
   }
-  const optionPicker = productOptions.mountPicker(document.querySelector('#product-picker'), optionState, moduleChanged => {
-    if (moduleChanged) selectModule(optionState.module);
-    else { optionPicker.update(); renderCatalog(); }
-    rememberCollection();
+  const optionPicker = productOptions.mountPicker(document.querySelector('#product-picker'), optionState, () => {
+    optionPicker.update(); renderCatalog(); rememberCollection();
   });
   moduleTabs.forEach((tab, index) => {
     tab.addEventListener('click', () => { selectModule(tab.dataset.module); rememberCollection(); });

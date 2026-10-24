@@ -3,11 +3,11 @@ window.DANEL_OPTIONS = (() => {
   const mugs = [
     { id: '11oz', title: 'Taza de 11 oz', image: 'taza-11oz.webp' },
     { id: '6oz', title: 'Taza de 6 oz', image: 'taza-6oz.webp' },
-    { id: 'magica', title: 'Taza mágica', image: 'taza-magica.webp' },
-    { id: 'negra', title: 'Taza negra', image: 'taza-negra.webp' }
+    { id: 'negra', title: 'Taza negra · 11 oz', image: 'taza-negra.webp' },
+    { id: 'magica', title: 'Taza mágica', image: 'taza-magica.webp' }
   ];
   const garments = [
-    { id: 'normal', title: 'Franela normal', image: 'franela-normal.webp' },
+    { id: 'normal', title: 'Corte clásico', image: 'franela-normal.webp' },
     { id: 'oversize', title: 'Franela oversize', image: 'franela-oversize.webp' },
     { id: 'sueter', title: 'Suéter', image: 'sueter.webp' }
   ];
@@ -23,16 +23,34 @@ window.DANEL_OPTIONS = (() => {
       size: sizes.includes(query.get('talla')) ? query.get('talla') : ''
     };
   }
+  function hasModel(state) {
+    return state.module === 'tazas' ? mugs.some(item => item.id === state.mug) : state.module === 'franelas' && garments.some(item => item.id === state.garment);
+  }
+  function readCollection(query) {
+    const state = read(query);
+    state.module = ['tazas', 'franelas'].includes(query.get('modulo')) ? query.get('modulo') : '';
+    state.mug = state.module === 'tazas' && mugs.some(item => item.id === query.get('taza')) ? query.get('taza') : '';
+    state.garment = state.module === 'franelas' && garments.some(item => item.id === query.get('modelo')) ? query.get('modelo') : '';
+    if (state.module !== 'franelas' || !hasModel(state)) { state.technique = ''; state.size = ''; }
+    return state;
+  }
+  function chooseModule(state, module) {
+    if (!['tazas', 'franelas'].includes(module) || state.module === module) return;
+    Object.assign(state, { module, mug: '', garment: '', technique: '', size: '' });
+  }
   function query(state, module = state.module) {
-    if (module === 'tazas') return { modulo: module, taza: state.mug };
-    const result = { modulo: 'franelas', modelo: state.garment };
+    if (!['tazas', 'franelas'].includes(module)) return {};
+    const result = { modulo: module };
+    if (module === 'tazas') { if (state.mug) result.taza = state.mug; return result; }
+    if (state.garment) result.modelo = state.garment;
     if (state.technique) result.tecnica = state.technique;
     if (state.size) result.talla = state.size;
     return result;
   }
   function label(state, module = state.module) {
-    if (module === 'tazas') return mugs.find(item => item.id === state.mug).title;
-    return [garments.find(item => item.id === state.garment).title,
+    if (module === 'tazas') return mugs.find(item => item.id === state.mug)?.title || '';
+    if (module !== 'franelas') return '';
+    return [garments.find(item => item.id === state.garment)?.title,
       techniques.find(item => item.id === state.technique)?.title,
       state.size ? 'Talla ' + state.size : null].filter(Boolean).join(' · ');
   }
@@ -59,32 +77,20 @@ window.DANEL_OPTIONS = (() => {
       if (!button || !root.contains(button)) return;
       const key = button.dataset.optionKey;
       const value = button.dataset.optionValue;
-      if (key === 'module' && value === state.module) return;
+      if (!['mug', 'garment', 'technique'].includes(key)) return;
       state[key] = value;
-      onChange(key === 'module');
+      onChange();
     });
     root.addEventListener('change', event => {
       if (event.target.matches('[data-size-select]')) { state.size = event.target.value; onChange(false); }
     });
     function update() {
+      if (!['tazas', 'franelas'].includes(state.module)) { root.replaceChildren(); renderedModule = undefined; return; }
       if (renderedModule !== state.module) {
         renderedModule = state.module;
         root.replaceChildren();
-        const heading = element('div', 'picker-heading');
-        const title = element('div');
-        title.append(element('p', 'eyebrow', 'PRIMERO, EL PRODUCTO'), element('h2', '', 'Elige cómo lo quieres.'));
-        const modules = element('div', 'picker-modules'); modules.setAttribute('role', 'group'); modules.setAttribute('aria-label', 'Tipo de producto');
-        modules.append(optionButton('Tazas', 'module', 'tazas', 'picker-module'), optionButton('Franelas', 'module', 'franelas', 'picker-module'));
-        heading.append(title, modules); root.append(heading);
-        if (state.module === 'franelas') {
-          const techniqueRow = element('div', 'picker-technique-row');
-          techniqueRow.append(element('span', 'picker-field-title', 'Técnica'));
-          const group = element('div', 'picker-techniques'); group.setAttribute('role', 'group'); group.setAttribute('aria-label', 'Técnica de estampado');
-          techniques.forEach(item => group.append(optionButton(item.title, 'technique', item.id, 'technique-choice')));
-          techniqueRow.append(group); root.append(techniqueRow);
-        }
         const railHead = element('div', 'picker-rail-heading');
-        railHead.append(element('h3', '', state.module === 'tazas' ? 'Tipo de taza' : 'Modelo de prenda'));
+        railHead.append(element('h2', '', state.module === 'tazas' ? 'Elige tu taza.' : 'Elige el modelo de franela.'));
         const arrows = element('div', 'picker-arrows');
         const prev = element('button', '', '←'), next = element('button', '', '→');
         prev.type = next.type = 'button'; prev.setAttribute('aria-label', 'Modelos anteriores'); next.setAttribute('aria-label', 'Más modelos');
@@ -101,6 +107,13 @@ window.DANEL_OPTIONS = (() => {
         prev.addEventListener('click', () => rail.scrollBy({ left: -320, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }));
         next.addEventListener('click', () => rail.scrollBy({ left: 320, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }));
         root.append(rail);
+        if (state.module === 'franelas') {
+          const techniqueRow = element('div', 'picker-technique-row');
+          techniqueRow.append(element('span', 'picker-field-title', 'Técnica'));
+          const group = element('div', 'picker-techniques'); group.setAttribute('role', 'group'); group.setAttribute('aria-label', 'Técnica de estampado');
+          techniques.forEach(item => group.append(optionButton(item.title, 'technique', item.id, 'technique-choice')));
+          techniqueRow.append(group); root.append(techniqueRow);
+        }
         const bottom = element('div', 'picker-bottom');
         if (state.module === 'franelas') {
           const sizeLabel = element('label', 'picker-size'); sizeLabel.htmlFor = 'collection-size';
@@ -118,7 +131,10 @@ window.DANEL_OPTIONS = (() => {
         button.setAttribute('aria-pressed', String(active));
       });
       const size = root.querySelector('[data-size-select]'); if (size) size.value = state.size;
-      root.querySelector('.picker-selection').textContent = 'Tu selección: ' + label(state);
+      const selected = hasModel(state);
+      root.querySelector('.picker-bottom').hidden = !selected;
+      const techniqueRow = root.querySelector('.picker-technique-row'); if (techniqueRow) techniqueRow.hidden = !selected;
+      root.querySelector('.picker-selection').textContent = selected ? 'Tu selección: ' + label(state) : '';
     }
     return { update };
   }
@@ -154,5 +170,5 @@ window.DANEL_OPTIONS = (() => {
     }
     return { update };
   }
-  return { mugs, garments, techniques, sizes, read, query, label, message, mountPicker, mountForm };
+  return { mugs, garments, techniques, sizes, read, readCollection, chooseModule, hasModel, query, label, message, mountPicker, mountForm };
 })();
